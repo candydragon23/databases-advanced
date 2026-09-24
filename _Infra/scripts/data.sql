@@ -1,9 +1,11 @@
+-- Удаление существующих таблиц  для того чтобы весь скрипт можно было запускать повторно
 drop table if exists users;
 drop table if exists ranks;
 drop table if exists parameters;
 drop table if exists equipment;
 drop table if exists packs;
 
+-- Создание таблиц
 create table users(
 user_id int,
 name text,
@@ -24,7 +26,7 @@ pressure int,
 wind_direction int,
 wind_speed int,
 bullet_deviation int,
-check (temperature between -58.0 and 58.0),
+check (temperature between -58.0 and 58.0), -- Проверка на максимальное и минимальное значение
 check (pressure between 500 and 900),
 check (wind_direction between 0 and 59),
 check (wind_speed between 0 and 15),
@@ -43,6 +45,7 @@ user_id int,
 param_id int
 );
 
+-- Вставка данных
 insert into users(user_id, name, rank_id) values (1, 'Иванов', 1);
 insert into users(user_id, name, rank_id) values (2, 'Иванов', 2);
 insert into users(user_id, name, rank_id) values (3, 'Иванов', 3);
@@ -63,6 +66,7 @@ insert into packs(pack_id, dat, user_id, param_id) values (1, '2026-04-28', 1, 1
 insert into packs(pack_id, dat, user_id, param_id) values (2, '2026-04-29', 2, 2);
 insert into packs(pack_id, dat, user_id, param_id) values (3, '2026-04-30', 3, 1);
 
+-- Запрос с объединением таблиц
 select pack_id, dat, name, rank, eq_name, height, temperature, pressure, wind_direction, wind_speed, bullet_deviation from packs
 join users on users.user_id = packs.user_id
 join ranks on users.rank_id = ranks.rank_id
