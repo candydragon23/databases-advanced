@@ -60,28 +60,24 @@ comment on column parameters.value is 'Значение';
 comment on column parameters.user_id is 'Код пользователя';
 comment on column parameters.equipment_id is 'Код оборудования';
 
--- Добавление данных
-delete from parameters;
-insert into parameters(param_id, pack_id, type_id, value, user_id, equipment_id) values (1, 1, 1, 12, 1, 1),
-(2, 2, 2, 750, 2, 2),
-(3, 3, 1, 15, 3, 1);
+-- Обновление данных
+update parameters set pack_id = 1, type_id = 1, value = 12, user_id = 1, equipment_id = 1 where param_id = 1;
+update parameters set pack_id = 2, type_id = 2, value = 750, user_id = 2, equipment_id = 2 where param_id = 2;
 
 -- Изменение таблицы 'Пачки'
 alter table packs
 drop column if exists user_id,
 drop column if exists param_id;
 
--- Добавление данных
-delete from packs;
-insert into packs(pack_id, dat) values (1, '2026-04-28'),
-(2, '2026-04-29'),
-(3, '2026-04-30');
+-- Обновление данных
+update packs set dat = '2026-04-28' where pack_id = 1;
+update packs set dat = '2026-04-29' where pack_id = 2;
+update packs set dat = '2026-04-30' where pack_id = 3;
 
 -- Изменение данных таблицы 'Сотрудники'
-delete from users;
-insert into users(user_id, name, rank_id) values (1, 'Иванов Иван Иванович', 1),
-(2, 'Иванов Иван Иванович', 2),
-(3, 'Иванов Иван Иванович', 3);
+update users set name = 'Иванов Иван Иванович', rank_id = 1 where user_id = 1;
+update users set name = 'Иванов Иван Иванович', rank_id = 2 where user_id = 2;
+update users set name = 'Иванов Иван Иванович', rank_id = 3 where user_id = 3;
 
 -- Создание запроса
 select dat, parameters.pack_id, name, parameter, type, value from parameters
