@@ -87,9 +87,22 @@ begin
 	
 	create function const_error(p_code text)
 	returns text
-	language sql stable
+	language plpgsql stable
 	as $func$
-	select message from const_errors where code = p_code;
+	declare
+	    v_message text;
+	begin
+	    select message into v_message
+	      from const_errors
+	     where code = p_code;
+	
+	    if v_message is null then
+	        raise exception 'Код ошибки "%" не найден в таблице const_errors', p_code
+	            using hint = 'Добавьте запись в const_errors или проверьте код ошибки';
+	    end if;
+	
+	    return v_message;
+	end;
 	$func$;
 	
 	create function const_value(p_name text)

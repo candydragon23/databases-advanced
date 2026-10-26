@@ -63,9 +63,9 @@ begin
 	    v_bt_ok := found;
 	
 	    if pack.equipment_code is null then
-	        errors := errors || format(const_error('INVALID_EQUIPMENT_TYPE'), 'NULL') || '; ';
+	        errors := errors || format(const_error('INVALID_TYPE'), 'NULL') || '; ';
 	    elsif not v_bt_ok then
-	        errors := errors || format(const_error('INVALID_EQUIPMENT_TYPE'), pack.equipment_code) || '; ';
+	        errors := errors || format(const_error('INVALID_TYPE'), pack.equipment_code) || '; ';
 	    end if;
 	
 	    -- Высота метеопоста
