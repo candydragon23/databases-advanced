@@ -1,3 +1,12 @@
+-- Добавление табличных значений в таблицу констант
+insert into constants(key, value, description) values ('table_temp', 15.9, 'Табличное значение температуры'),
+('table_pressure', 750, 'Табличное значение давления'),
+('temp_addition', 50, 'Добавка при отрицательной температуре'),
+('min_bullet_deviation', 40, 'Минимальное значение сноса пуль'),
+('min_wind_speed', 3, 'Минимальное значение скорости ветра'),
+('max_height', 4000, 'Максимальное значение высоты'),
+('min_height', 200, 'Минимальное значение высоты');
+
 -- Пересоздание типа для входных параметров
 drop type if exists input_params cascade;
 
@@ -13,7 +22,7 @@ create type input_params as (
 -- Создание хранимой процедуры вычисления
 drop procedure if exists calculation;
 
-create procedure calculation(params input_params, equipment_id int)
+create procedure calculation(params input_params, eq_id int)
 language plpgsql
 as $func$
 declare
@@ -33,13 +42,13 @@ begin
 	validate_parameter_pack(params);
 	
 	-- Расчет отклонения давления
-	v_pres := params.pressure - 750;
+	v_pres := params.pressure - (select value from constants where key = 'table_pressure');
 
 	-- Расчет виртуальной поправки температуры
 	v_int_temp := calculate_interpolation(params.temperature, interpolation_params(params.temperature));
 
 	-- Расчет отклонения виртуальной температуры
-	v_virt_temp := params.temperature + v_int_temp - 15.9;
+	v_virt_temp := params.temperature + v_int_temp - (select value from constants where key = 'table_temp');
 
 	-- Расчет отклонения средней температуры
 	v_virt_temp_round := round(v_virt_temp);
@@ -51,19 +60,19 @@ begin
 	else
 		v_avg_temp := (select row_values[v_virt_temp_tens] from correction where table_type_id = 9 and height_id = (select id from height_correction where height = params.height))
 		+ (select row_values[v_virt_temp_ones] from correction where table_type_id = 9 and height_id = (select id from height_correction where height = params.height));
-		v_avg_temp := abs(v_avg_temp) + 50;
+		v_avg_temp := abs(v_avg_temp) + (select value from constants where key = 'temp_addition');
 	end if;
 
 	-- Расчет скорости ветра
-	if equipment_id = 1 then -- ВР
-		if params.bullet_deviation < 40 then
+	if (select eq_name from equipment where equipment_id = eq_id) = 'ВР' then -- ВР
+		if params.bullet_deviation < (select value from constants where key = 'min_bullet_deviation') then
 			v_wind_speed := 0;
 		else
 			v_head_wind_speed := array_position((select header_values from correction_types where description_id = 4), params.bullet_deviation);
 			v_wind_speed := (select row_values[v_head_wind_speed] from correction where table_type_id = 4 and height_id = (select id from height_correction where height = params.height));
 		end if;
-	else -- ДМК
-		if params.wind_speed < 3 then
+	elsif (select eq_name from equipment where equipment_id = eq_id) = 'ДМК' then -- ДМК
+		if params.wind_speed < (select value from constants where key = 'min_wind_speed') then
 			v_wind_speed := 0;
 		else
 			v_head_wind_speed := array_position((select header_values from correction_types where description_id = 6), params.wind_speed);
@@ -72,23 +81,23 @@ begin
 	end if;
 
 	-- Расчет направления ветра
-	if equipment_id = 1 then -- ВР
-		if params.height > 4000 then
-			v_wind_dir := (select row_values[1] from correction where table_type_id = 5 and height_id = (select id from height_correction where height = 4000))
+	if (select eq_name from equipment where equipment_id = eq_id) = 'ВР' then -- ВР
+		if params.height > (select value from constants where key = 'max_height') then
+			v_wind_dir := (select row_values[1] from correction where table_type_id = 5 and height_id = (select id from height_correction where height = (select value from constants where key = 'max_height')))
 			+ params.wind_direction;
-		elsif params.height < 200 then
-			v_wind_dir := (select row_values[1] from correction where table_type_id = 5 and height_id = (select id from height_correction where height = 200))
+		elsif params.height < (select value from constants where key = 'min_height') then
+			v_wind_dir := (select row_values[1] from correction where table_type_id = 5 and height_id = (select id from height_correction where height = (select value from constants where key = 'min_height')))
 			+ params.wind_direction;
 		else
 			v_wind_dir := (select row_values[1] from correction where table_type_id = 5 and height_id = (select id from height_correction where height = params.height))
 			+ params.wind_direction;
 		end if;
-	else -- ДМК
-		if params.height > 4000 then
-			v_wind_dir := (select row_values[1] from correction where table_type_id = 7 and height_id = (select id from height_correction where height = 4000))
+	elsif (select eq_name from equipment where equipment_id = eq_id) = 'ДМК' then -- ДМК
+		if params.height > (select value from constants where key = 'max_height') then
+			v_wind_dir := (select row_values[1] from correction where table_type_id = 7 and height_id = (select id from height_correction where height = (select value from constants where key = 'max_height')))
 			+ params.wind_direction;
-		elsif params.height < 200 then
-			v_wind_dir := (select row_values[1] from correction where table_type_id = 7 and height_id = (select id from height_correction where height = 200))
+		elsif params.height < (select value from constants where key = 'min_height') then
+			v_wind_dir := (select row_values[1] from correction where table_type_id = 7 and height_id = (select id from height_correction where height = (select value from constants where key = 'min_height')))
 			+ params.wind_direction;
 		else
 			v_wind_dir := (select row_values[1] from correction where table_type_id = 7 and height_id = (select id from height_correction where height = params.height))
